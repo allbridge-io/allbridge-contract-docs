@@ -44,7 +44,7 @@ Blockchain IDs:
 ```
 For identification token use `tokenSource` `tokenSourceAddress` pair
 
-##Check destination address
+## Check destination address
 To check destination address call:
 ```http request
 GET https://solbridgeapi.net/check/{blockchainId}/address/{address}
@@ -68,7 +68,7 @@ UNINITIALIZED - Address is not itialized (only for Solana)
 CONTRACT_ADDRESS - Contract address (only for Solana)
 ```
 
-##Check destination token balance
+## Check destination token balance
 To check destination token balance on the bridge you need to call server method:
 ```http request
 GET https://solbridgeapi.net/check/{blockchainId}/balance/{tokenSource}/{tokenSourceAddress}
@@ -81,7 +81,7 @@ GET https://solbridgeapi.net/check/{blockchainId}/balance/{tokenSource}/{tokenSo
   "tokenAddress": "So11111111111111111111111111111111111111112" // Token address on the destination blockchain
 }
 ```
-##Create lock
+## Create lock
 
 Call `lock` method
 
@@ -123,7 +123,7 @@ Response example
 }
 ```
 
-##Unlock method 
+## Unlock method 
 All parameters for unlock is returned by `sign` method    
 
 ```solidity
