@@ -2,77 +2,33 @@
   {
     "inputs": [
       {
-        "internalType": "bytes4",
-        "name": "blockchainId_",
-        "type": "bytes4"
-      },
-      {
         "internalType": "address",
         "name": "feeCollector_",
         "type": "address"
       },
       {
         "internalType": "address",
-        "name": "wrappedAssetMaster_",
+        "name": "admin_",
         "type": "address"
       },
       {
         "internalType": "address",
-        "name": "oracle_",
+        "name": "validator_",
         "type": "address"
       },
       {
         "internalType": "address",
-        "name": "WETH_",
+        "name": "feeOracle_",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "unlockSigner_",
         "type": "address"
       }
     ],
     "stateMutability": "nonpayable",
     "type": "constructor"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "tokenAddress",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "bytes4",
-        "name": "source",
-        "type": "bytes4"
-      },
-      {
-        "indexed": false,
-        "internalType": "bytes32",
-        "name": "sourceAddress",
-        "type": "bytes32"
-      }
-    ],
-    "name": "CreatedWrappedToken",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "previousOwner",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "newOwner",
-        "type": "address"
-      }
-    ],
-    "name": "OwnershipTransferred",
-    "type": "event"
   },
   {
     "anonymous": false,
@@ -97,9 +53,9 @@
       },
       {
         "indexed": true,
-        "internalType": "uint256",
+        "internalType": "uint128",
         "name": "lockId",
-        "type": "uint256"
+        "type": "uint128"
       },
       {
         "indexed": false,
@@ -146,9 +102,9 @@
       },
       {
         "indexed": true,
-        "internalType": "uint256",
+        "internalType": "uint128",
         "name": "lockId",
-        "type": "uint256"
+        "type": "uint128"
       },
       {
         "indexed": false,
@@ -162,56 +118,6 @@
   },
   {
     "inputs": [],
-    "name": "WETH",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "blockchainId",
-    "outputs": [
-      {
-        "internalType": "bytes4",
-        "name": "",
-        "type": "bytes4"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes4",
-        "name": "",
-        "type": "bytes4"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "",
-        "type": "bytes32"
-      }
-    ],
-    "name": "externalTokenMap",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
     "name": "feeCollector",
     "outputs": [
       {
@@ -221,51 +127,22 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "locks",
+    "inputs": [],
+    "name": "feeOracle",
     "outputs": [
       {
         "internalType": "address",
-        "name": "sender",
+        "name": "",
         "type": "address"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "recipient",
-        "type": "bytes32"
-      },
-      {
-        "internalType": "bytes4",
-        "name": "destination",
-        "type": "bytes4"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      },
-      {
-        "internalType": "bytes4",
-        "name": "tokenSource",
-        "type": "bytes4"
-      },
-      {
-        "internalType": "bytes32",
-        "name": "tokenSourceAddress",
-        "type": "bytes32"
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [
@@ -288,23 +165,24 @@
         "type": "bytes32"
       },
       {
-        "internalType": "uint256",
-        "name": "fee",
-        "type": "uint256"
-      },
-      {
         "internalType": "uint8",
         "name": "precision",
         "type": "uint8"
       },
       {
-        "internalType": "bool",
-        "name": "isNative",
-        "type": "bool"
+        "internalType": "enum Bridge.TokenType",
+        "name": "tokenType",
+        "type": "uint8"
+      },
+      {
+        "internalType": "enum Bridge.TokenStatus",
+        "name": "tokenStatus",
+        "type": "uint8"
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [
@@ -314,25 +192,12 @@
         "type": "bytes4"
       },
       {
-        "internalType": "uint256",
+        "internalType": "bytes32",
         "name": "",
-        "type": "uint256"
+        "type": "bytes32"
       }
     ],
-    "name": "unlocks",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "wrappedTokenMaster",
+    "name": "tokenSourceMap",
     "outputs": [
       {
         "internalType": "address",
@@ -341,32 +206,48 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [],
-    "name": "lockLength",
+    "name": "unlockSigner",
     "outputs": [
       {
-        "internalType": "uint256",
+        "internalType": "address",
         "name": "",
-        "type": "uint256"
+        "type": "address"
       }
     ],
     "stateMutability": "view",
-    "type": "function"
+    "type": "function",
+    "constant": true
+  },
+  {
+    "inputs": [],
+    "name": "validator",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function",
+    "constant": true
   },
   {
     "inputs": [
       {
+        "internalType": "uint128",
+        "name": "lockId",
+        "type": "uint128"
+      },
+      {
         "internalType": "address",
         "name": "tokenAddress",
         "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
       },
       {
         "internalType": "bytes32",
@@ -377,6 +258,11 @@
         "internalType": "bytes4",
         "name": "destination",
         "type": "bytes4"
+      },
+      {
+        "internalType": "uint256",
+        "name": "amount",
+        "type": "uint256"
       }
     ],
     "name": "lock",
@@ -387,6 +273,16 @@
   {
     "inputs": [
       {
+        "internalType": "uint128",
+        "name": "lockId",
+        "type": "uint128"
+      },
+      {
+        "internalType": "address",
+        "name": "wrappedBaseTokenAddress",
+        "type": "address"
+      },
+      {
         "internalType": "bytes32",
         "name": "recipient",
         "type": "bytes32"
@@ -397,17 +293,18 @@
         "type": "bytes4"
       }
     ],
-    "name": "lockEth",
+    "name": "lockBase",
     "outputs": [],
     "stateMutability": "payable",
-    "type": "function"
+    "type": "function",
+    "payable": true
   },
   {
     "inputs": [
       {
-        "internalType": "uint256",
+        "internalType": "uint128",
         "name": "lockId",
-        "type": "uint256"
+        "type": "uint128"
       },
       {
         "internalType": "address",

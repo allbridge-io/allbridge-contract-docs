@@ -7,7 +7,7 @@ Allbridge documentation for EVN. It describes how to transfer assets from one bl
 To get info about available tokens you need to call a server method:
 
 ```http request
-GET https://solbridgeapi.net/token-info
+GET https://allbridgeapi.net/token-info
 ```
 
 Example response:
@@ -19,10 +19,10 @@ Example response:
     "tokens": [ // List of tokens available in the current blockchain
       {
         "address": "0x7DfF46370e9eA5f0Bad3C4E29711aD50062EA7A4", // Token address in the current blockchain
-        "fee": "10000000000000000", // Bridge fee with token precision
+        "minFee": "10000000000000000", // Bridge min fee with token precision
         "tokenSource": "SOL", // Main token blockchain ID
         "tokenSourceAddress": "0x069b8857feab8184fb687f634618c035dac439dc1aeb3b5598a0f00000000001", // Main token address (32 bytes hex, zeros at the end)
-        "isNative": false, // If this token is main asset (ETH for Ethereum, SOL for Solana)
+        "isBase": false, // If this token is main asset (ETH for Ethereum, SOL for Solana)
         "isWrapped": true, // If token is wrapped by bridge 
         "precision": 18, // Token precision (decimals)
         "symbol": "SOL", // Token symbol
@@ -36,18 +36,22 @@ Example response:
 
 Blockchain IDs:
 ```
-    POL - Polygon
+    AVA - Avalanche
     BSC - Binance Smart Chain
+    CELO - Celo
     ETH - Ethereum
+    FTM - Fantom
     HECO - Huobi ECO Chain
+    POL - Polygon
     SOL - Solana
+    TRA - Terra
 ```
 For identification token use `tokenSource` `tokenSourceAddress` pair
 
 ## Check destination address
 To check destination address call:
 ```http request
-GET https://solbridgeapi.net/check/{blockchainId}/address/{address}
+GET https://allbridgeapi.net/check/{blockchainId}/address/{address}
 ```
 Response example:
 
@@ -71,7 +75,7 @@ CONTRACT_ADDRESS - Contract address (only for Solana)
 ## Check destination token balance
 To check destination token balance on the bridge you need to call server method:
 ```http request
-GET https://solbridgeapi.net/check/{blockchainId}/balance/{tokenSource}/{tokenSourceAddress}
+GET https://allbridgeapi.net/check/{blockchainId}/balance/{tokenSource}/{tokenSourceAddress}
 ```
 
 ```json5
@@ -86,33 +90,42 @@ GET https://solbridgeapi.net/check/{blockchainId}/balance/{tokenSource}/{tokenSo
 Call `lock` method
 
 ```solidity
-    function lock(address tokenAddress, uint256 amount, bytes32 recipient, bytes4 destination)
+    function lock(uint128 lockId, address tokenAddress, bytes32 recipient, bytes4 destination, uint256 amount)
 ```
 
 ```
+    lockId - Random uint128 number. First byte must be 0x01 !
     tokenAddress - Token address
-    amount - Amount of token to transfer
     recipient - Recipient address as 32 bytes (zeros at the end)
     destination - Blockchain ID as 4 bytes (UTF8, zeros at the end)
+    amount - Amount of token to transfer
 ```
 
 For native tokens use another method:
 ```solidity
-function lockEth(bytes32 recipient, bytes4 destination)
+    function lockBase(uint128 lockId, address wrappedBaseTokenAddress, bytes32 recipient, bytes4 destination) payable
+```
+
+```
+    lockId - Random uint128 number. First byte must be 0x01 !
+    wrappedBaseTokenAddress - Wrapped token address (WETH address)
+    recipient - Recipient address as 32 bytes (zeros at the end)
+    destination - Blockchain ID as 4 bytes (UTF8, zeros at the end)
 ```
 
 ## Get signature
 
 Call server method with lock transaction id to get info and signature
 ```http request
-GET https://solbridgeapi.net/sign/{transactionId}
+GET https://allbridgeapi.net/sign/{transactionId}
 ```
 
 Response example
 
 ```json5
 {
-  "lockId": "777", // Inner lock id
+  "lockId": "1999368962333213694265338977688250756", // Inner lock id
+  "block": "28598359", // Lock transaction block
   "source": "POL", // Transfer source blockchain ID
   "amount": "5000000000", // Amount to receive in system precision (9) (send_amount - bridge_fee)
   "destination": "SOL", // Transfer destination blockchain ID
@@ -127,7 +140,7 @@ Response example
 All parameters for unlock is returned by `sign` method    
 
 ```solidity
-function unlock(uint256 lockId, address recipient, uint256 amount, bytes4 lockSource, bytes4 tokenSource, bytes32 tokenSourceAddress, bytes calldata signature)
+function unlock(uint128 lockId, address recipient, uint256 amount, bytes4 lockSource, bytes4 tokenSource, bytes32 tokenSourceAddress, bytes calldata signature)
 ```
 
 ```
