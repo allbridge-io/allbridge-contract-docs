@@ -101,6 +101,8 @@ For native tokens use another method:
 function lockEth(bytes32 recipient, bytes4 destination)
 ```
 
+For Solana call `lock` instruction. All needed information is in `instruction.rs` and `state.rs`
+
 ## Get signature
 
 Call server method with lock transaction id to get info and signature
@@ -139,5 +141,7 @@ tokenSource - Token source blockchain ID (4 bytes, UTF8, zeros at the end).
 tokenSourceAddress - Token source address. Exect the same as in the sign method result.
 signature - Signature for unlock. Exect the same as in the sign method result.
 ```
+
+For Solana call `claim` instruction. All needed information is in `instruction.rs` and `state.rs`
 
 
