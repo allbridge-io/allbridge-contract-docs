@@ -39,12 +39,12 @@ Call `lock` method:
 ```
 
 - `lockId` a random 16-byte value identifying the transfer within the bridge, with first byte is used as a bridge version (must be `0x01`)
-- `tokenAddress` is an address of the token you're trying to lock
+- `tokenAddress` is an address of the token you want to send
 - `recipient` recipient address as 32 bytes (zeros at the end if receiving blockchain has addresses shorter than 32 bytes)
 - `destination` [Blockchain ID](#blockchain-ids) as 4 bytes (UTF8, zeros at the end if shorter than 4 bytes)
 - `amount` amount of lock on EVM side
 
-For native tokens use another method:
+For native tokens use a different method:
 ```solidity
     function lockBase(uint128 lockId, address wrappedBaseTokenAddress, bytes32 recipient, bytes4 destination) payable
 ```
@@ -75,8 +75,8 @@ pub struct LockArgs {
 
 - `recipient` is 32-byte recipient address. For chains with smaller addresses (like EVM) pad address with zeroes at the end until the size is 32 bytes.
 - `destination` 4-byte destination [blockchain ID](#blockchain-ids)
-- `amount` amount (including fee) to lock in the Solana side
-- `lock_id` a random 16-byte value identifying the transfer within the bridge, with first byte is used as a bridge version (must be `0x01`)
+- `amount` amount (including fee) to lock on the Solana side
+- `lock_id` a random 16-byte value identifying the transfer within the bridge, with the first byte is used as a bridge version (must be `0x01`)
 
 ##### Accounts
 
@@ -99,7 +99,7 @@ pub struct LockArgs {
 
 ### Get signature
 
-Call server method with lock transaction id to get info and signature
+Allbridge API endpoint to get transaction details and signature using transaction lock ID
 ```http request
 GET https://allbridgeapi.net/sign/{transactionId}
 ```
@@ -133,9 +133,9 @@ function unlock(uint128 lockId, address recipient, uint256 amount, bytes4 lockSo
 - `lockId` Lock ID value of the initial lock on Blockchain #1 (returned by the `sign` Allbridge API call)
 - `recipient` Recipient address returned by the `sign` API call and formatted as EVM address (first 20 bytes)
 - `amount` Amount in bridge internal precision (9 digits), use the same amount as returned by the `sign` Allbridge API call
-- `lockSource` Transfer source [Blockchain ID](#blockchain-ids) (4 bytes, UTF8, zeros at the end)
-- `tokenSource` Token source [Blockchain ID](#blockchain-ids) (4 bytes, UTF8, zeros at the end)
-- `tokenSourceAddress` Token source address, use the same value as returned by the `sign` method
+- `lockSource` Transfer source [Blockchain ID](#blockchain-ids) (4 bytes, UTF8, zeros at the end), `source` field in `sign` response
+- `tokenSource` Token source [Blockchain ID](#blockchain-ids) (4 bytes, UTF8, zeros at the end), `tokenSource` field in `sign` response
+- `tokenSourceAddress` Token source address, `tokenSourceAddress` field in `sign` response
 - `signature` Signature for unlock, pass the value received from the `sign` method call
 
 #### Solana
@@ -188,7 +188,7 @@ pub struct UnlockArgs {
 
 ##### Signature verification instruction
 
-The heavy lifting of the signature verification is handled by the system Secp256k1 Program (`KeccakSecp256k11111111111111111111111111111`). It should be added to the same transaction as the `unlock` instruction and its index in the transaction used in `secp_instruction_index` field. The data for the Secp256k1 Program instruction is already prepared by the Allbridge API, you can use the data returned in the `signature` field of the `sign` method call.
+The heavy lifting of the signature verification is handled by the system Secp256k1 Program (`KeccakSecp256k11111111111111111111111111111`). It should be added to the same transaction as the `unlock` instruction. Also the position this instruction appears in the transaction (its index) should be used in `secp_instruction_index` parameter of the `unlock` instruction. The data for the Secp256k1 Program instruction is already prepared by the Allbridge API, you can use the data returned in the `signature` field of the `sign` method call.
 
 ## Utility endpoints
 
