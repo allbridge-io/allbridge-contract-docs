@@ -97,6 +97,24 @@ pub struct LockArgs {
 15. SPL Token Program ID, use `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA`
 16. System Program ID, use `11111111111111111111111111111111`
 
+#### XRPL
+
+On XRPL locking tokens is a simple transfer to the bridge address `r4w1LrneWZqX5RrgFPx2gto66dwo2Zymqy`. Bridging destination is encoded in the following fields:
+
+- `DestinationTag` is a destination blockchain encoded in 4-byte hex with trailing zeroes. For example, `1112752896` is `0x42534300` or `BSC`
+- `InvoiceID` should be set to the recipient's address (32 bytes with trailing zeroes)
+
+Here is a [sample transaction](https://livenet.xrpl.org/transactions/3201416350CA9D6B63684E49C7F2BF99146802DBB489A56FC5F5EB1728C69D5B/raw).
+
+Alternatively you can call Allbridge server to prepare transaction and return QR code for the wallet to scan by sending `POST` to `https://xrpl.allbridgeapi.net/xumm/transaction` or `https://xrpl.allbridgeapi.net/solo/transaction` with the following JSON:
+
+- `from` sender address, for example `rHfGE9y7MSfJc4pEG3mua7tvAqoE4jsCPh`
+- `amount` amount to send, integer as string, `10000000`
+- `destination` destination blockchain, string, `BSC`
+- `recipient` recipient address, 32 byte hex as string, `081A16070B02181B1B17171E100D0A170E1D111B000000000000000000000000`
+- `tokenAddress` token minter address, string, `r3kCiZTA9N7RjK2bYCmJSoFcnDQs95apd7`
+- `symbol` token symbol, string, `aeUSDC`
+
 ### Get signature
 
 Allbridge API endpoint to get transaction details and signature using transaction lock ID
@@ -190,6 +208,32 @@ pub struct UnlockArgs {
 
 The heavy lifting of the signature verification is handled by the system Secp256k1 Program (`KeccakSecp256k11111111111111111111111111111`). It should be added to the same transaction as the `unlock` instruction. Also the position this instruction appears in the transaction (its index) should be used in `secp_instruction_index` parameter of the `unlock` instruction. The data for the Secp256k1 Program instruction is already prepared by the Allbridge API, you can use the data returned in the `signature` field of the `sign` method call.
 
+#### XRPL
+
+##### Trust Line
+
+To receive tokens on XRPL (if it is not XRPL) a trust line has to be established. You can do it yourself or use Allbridge server to prepare transaction for the user. Send `POST` to `https://xrpl.allbridgeapi.net/xumm/create-line` or `https://xrpl.allbridgeapi.net/solo/create-line` with the following JSON:
+
+- `userAddress`, recipient address, for example `rHfGE9y7MSfJc4pEG3mua7tvAqoE4jsCPh`
+- `tokenAddress`, token minter address, `r3kCiZTA9N7RjK2bYCmJSoFcnDQs95apd7`
+- `symbol`, token symbol on XRPL, for example `UST`
+
+##### Unlock
+
+Send `POST` to `https://xrpl.allbridgeapi.net/unlock` with the following JSON object:
+
+```json5
+{
+  "lockId": "2628534210935351210556389661603063554", // Lock ID received by the call to the signer
+  "recipient": "0x7a7d5401dd19f6a60c7b24af9861b22e593d52f518ded5714000000000000000", // Recipient address in hex
+  "amount": "3000000000", // Integer amount as string
+  "source": "TRA", // Transaction source address
+  "tokenSource": "TRA", // Token source address
+  "tokenSourceAddress": "0x0e151a1706190000000000000000000000000000000000000000000000000000", // Token minter/contract address on the original chain
+  "signature": "0x85c5e8613985a01db6ff77c61b1a59a0e45630755de045dd…9291b70abe53647865cee3224df76d62936d795e2dcb8601c" // Signature returned by the signer
+}
+```
+
 ## Utility endpoints
 
 ### List supported tokens
@@ -265,6 +309,16 @@ GET https://allbridgeapi.net/check/{blockchainId}/balance/{tokenSource}/{tokenSo
 ```
 
 ## Fee calculation
+
+### Ethereum
+
+On Ethereum we always charge a minimum fee (`minFee` in token list).
+
+### XRPL
+
+On XRPL we charge `0.1%` fee unless it is smaller than `minFee`. If it is smaller we charge `minFee` instead.
+
+### Other chains
 
 Allbridge fee can be of two types
 
