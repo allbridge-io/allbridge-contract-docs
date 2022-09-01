@@ -115,6 +115,31 @@ Alternatively you can call Allbridge server to prepare transaction and return QR
 - `tokenAddress` token minter address, string, `r3kCiZTA9N7RjK2bYCmJSoFcnDQs95apd7`
 - `symbol` token symbol, string, `aeUSDC`
 
+#### Tezos
+
+Call `lock_asset` method:
+
+```
+type lock_asset_t       is [@layout:comb] record[
+  chain_id                : chain_id_t;
+  lock_id                 : lock_id_t;
+  token_source            : bytes;
+  token_source_address    : bytes;
+  amount                  : nat;
+  recipient               : bytes;
+]
+```
+
+- `chain_id` destination [Blockchain ID](#blockchain-ids) as 4 bytes (UTF8, zeros at the end if shorter than 4 bytes)
+- `lock_id` a random 16-byte value identifying the transfer within the bridge, with first byte is used as a bridge version (must be `01`)
+- `token_source` token source [Blockchain ID](#blockchain-ids) (4 bytes, UTF8, zeros at the end)
+- `token_source_address` is a source address of the token you want to send (32 bytes)
+- `amount` amount of lock on Tezos side
+- `recipient` recipient address as 32 bytes (zeros at the end if receiving blockchain has addresses shorter than 32 bytes)
+
+`If you need to send native token, you have to attach the same amount as in the arguments.`
+
+
 ### Get signature
 
 Allbridge API endpoint to get transaction details and signature using transaction lock ID
@@ -234,6 +259,33 @@ Send `POST` to `https://xrpl.allbridgeapi.net/unlock` with the following JSON ob
 }
 ```
 
+#### Tezos
+
+All parameters for unlock is returned by the Allbridge API `sign` method (previous step)
+
+Call `unlock_asset` method:
+
+```
+type unlock_asset_t     is [@layout:comb] record[
+  lock_id                 : lock_id_t;
+  recipient               : address;
+  amount                  : nat;
+  chain_from_id           : chain_id_t;
+  token_source            : bytes;
+  token_source_address    : bytes;
+  signature               : signature;
+]
+```
+
+- `lock_id` Lock ID value of the initial lock on Blockchain #1 (returned by the `sign` Allbridge API call)
+- `recipient` recipient tezos address (needs to be transformed from hex format encodePubKey(first 22 bytes))
+- `amount` amount in bridge internal precision (9 digits), use the same amount as returned by the `sign` Allbridge API call
+- `chain_from_id` source [Blockchain ID](#blockchain-ids) as 4 bytes (UTF8, zeros at the end if shorter than 4 bytes)
+- `token_source` receiving token source [Blockchain ID](#blockchain-ids) (4 bytes, UTF8, zeros at the end)
+- `token_source_address` receiving token source address (32 bytes), use the same value as returned by the `sign` method
+- `signature` signature data, use the same value as returned by the `sign` method
+
+
 ## Utility endpoints
 
 ### List supported tokens
@@ -350,3 +402,9 @@ gets charged instead. As a special case, when the base fee rate of the dynamic p
 - `POL` Polygon
 - `SOL` Solana
 - `TRA` Terra
+- `TEZ` Tezos
+
+### Tezos types
+- `type lock_id_t is bytes`
+- `type chain_id_t is bytes`
+
