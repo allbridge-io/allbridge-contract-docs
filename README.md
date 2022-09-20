@@ -42,7 +42,7 @@ Call `lock` method:
 - `tokenAddress` is an address of the token you want to send
 - `recipient` recipient address as 32 bytes (zeros at the end if receiving blockchain has addresses shorter than 32 bytes)
 - `destination` [Blockchain ID](#blockchain-ids) as 4 bytes (UTF8, zeros at the end if shorter than 4 bytes)
-- `amount` amount of lock on EVM side
+- `amount` amount to lock on EVM side
 
 For native tokens use a different method:
 ```solidity
@@ -134,10 +134,10 @@ type lock_asset_t       is [@layout:comb] record[
 - `lock_id` a random 16-byte value identifying the transfer within the bridge, with first byte is used as a bridge version (must be `01`)
 - `token_source` token source [Blockchain ID](#blockchain-ids) (4 bytes, UTF8, zeros at the end)
 - `token_source_address` is a source address of the token you want to send (32 bytes)
-- `amount` amount of lock on Tezos side
+- `amount` amount to lock on Tezos side
 - `recipient` recipient address as 32 bytes (zeros at the end if receiving blockchain has addresses shorter than 32 bytes)
 
-`If you need to send native token, you have to attach the same amount as in the arguments.`
+`If you need to send native token, you have to attach to the transaction the same amount as in the arguments.`
 
 
 ### Get signature
@@ -167,7 +167,7 @@ Response example
 
 #### EVM
 
-All parameters for unlock is returned by the Allbridge API `sign` method (previous step)
+All parameters for unlock are returned by the Allbridge API `sign` method (previous step)
 
 ```solidity
 function unlock(uint128 lockId, address recipient, uint256 amount, bytes4 lockSource, bytes4 tokenSource, bytes32 tokenSourceAddress, bytes calldata signature)
@@ -175,7 +175,7 @@ function unlock(uint128 lockId, address recipient, uint256 amount, bytes4 lockSo
 
 - `lockId` Lock ID value of the initial lock on Blockchain #1 (returned by the `sign` Allbridge API call)
 - `recipient` Recipient address returned by the `sign` API call and formatted as EVM address (first 20 bytes)
-- `amount` Amount in bridge internal precision (9 digits), use the same amount as returned by the `sign` Allbridge API call
+- `amount` Amount in the internal precision of the bridge (9 digits), use the same amount as returned by the `sign` Allbridge API call
 - `lockSource` Transfer source [Blockchain ID](#blockchain-ids) (4 bytes, UTF8, zeros at the end), `source` field in `sign` response
 - `tokenSource` Token source [Blockchain ID](#blockchain-ids) (4 bytes, UTF8, zeros at the end), `tokenSource` field in `sign` response
 - `tokenSourceAddress` Token source address, `tokenSourceAddress` field in `sign` response
@@ -239,9 +239,9 @@ The heavy lifting of the signature verification is handled by the system Secp256
 
 To receive tokens on XRPL (if it is not XRPL) a trust line has to be established. You can do it yourself or use Allbridge server to prepare transaction for the user. Send `POST` to `https://xrpl.allbridgeapi.net/xumm/create-line` or `https://xrpl.allbridgeapi.net/solo/create-line` with the following JSON:
 
-- `userAddress`, recipient address, for example `rHfGE9y7MSfJc4pEG3mua7tvAqoE4jsCPh`
-- `tokenAddress`, token minter address, `r3kCiZTA9N7RjK2bYCmJSoFcnDQs95apd7`
-- `symbol`, token symbol on XRPL, for example `UST`
+- `userAddress` Recipient address, for example `rHfGE9y7MSfJc4pEG3mua7tvAqoE4jsCPh`
+- `tokenAddress` Token minter address, `r3kCiZTA9N7RjK2bYCmJSoFcnDQs95apd7`
+- `symbol` Token symbol on XRPL, for example `UST`
 
 ##### Unlock
 
@@ -261,7 +261,7 @@ Send `POST` to `https://xrpl.allbridgeapi.net/unlock` with the following JSON ob
 
 #### Tezos
 
-All parameters for unlock is returned by the Allbridge API `sign` method (previous step)
+All parameters for unlock are returned by the Allbridge API `sign` method (previous step)
 
 Call `unlock_asset` method:
 
@@ -278,12 +278,12 @@ type unlock_asset_t     is [@layout:comb] record[
 ```
 
 - `lock_id` Lock ID value of the initial lock on Blockchain #1 (returned by the `sign` Allbridge API call)
-- `recipient` recipient tezos address (needs to be transformed from hex format encodePubKey(first 22 bytes))
-- `amount` amount in bridge internal precision (9 digits), use the same amount as returned by the `sign` Allbridge API call
-- `chain_from_id` source [Blockchain ID](#blockchain-ids) as 4 bytes (UTF8, zeros at the end if shorter than 4 bytes)
-- `token_source` receiving token source [Blockchain ID](#blockchain-ids) (4 bytes, UTF8, zeros at the end)
-- `token_source_address` receiving token source address (32 bytes), use the same value as returned by the `sign` method
-- `signature` signature data, use the same value as returned by the `sign` method
+- `recipient` Recipient Tezos address (needs to be transformed from hex format encodePubKey, first 22 bytes)
+- `amount` Amount in the internal precision of the bridge (9 digits), use the same amount as returned by the `sign` Allbridge API call
+- `chain_from_id` Source [Blockchain ID](#blockchain-ids) as 4 bytes (UTF8, zeros at the end if shorter than 4 bytes)
+- `token_source` Receiving token source [Blockchain ID](#blockchain-ids) (4 bytes, UTF8, zeros at the end)
+- `token_source_address` Receiving token source address (32 bytes), use the same value as returned by the `sign` method
+- `signature` Signature data, use the same value as returned by the `sign` method
 
 
 ## Utility endpoints
