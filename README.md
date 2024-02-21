@@ -1,3 +1,7 @@
+***!!! Information below is about Allbridge Classic !!!***
+
+***!!! If you want to work with Allbridge Core stablecoin bridge please visit [https://github.com/allbridge-io/allbridge-core-docs](https://github.com/allbridge-io/allbridge-core-docs) or [https://github.com/allbridge-io/allbridge-core-js-sdk](https://github.com/allbridge-io/allbridge-core-js-sdk) !!!***
+
 # Allbridge API
 
 ## Intro
