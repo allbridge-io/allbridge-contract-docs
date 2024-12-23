@@ -29,6 +29,7 @@ There are also some helper methods to list supported tokens and their fees, chec
 - [Fee calculation](#fee-calculation)
 - [Constants](#constants)
   - [Blockchain IDs](#blockchain-ids)
+- [Multisig bridge](#multisig-bridge)
 
 ## Main transfer flow
 
@@ -412,3 +413,142 @@ gets charged instead. As a special case, when the base fee rate of the dynamic p
 - `type lock_id_t is bytes`
 - `type chain_id_t is bytes`
 
+# Multisig bridge
+
+## Intro
+
+The Stellar integration in the Allbridge ecosystem operates using a multisig bridge mechanism, which requires two signatures for transferring assets.
+
+### Lock tokens
+
+#### Stellar
+
+On Stellar, locking tokens is a simple transfer to the bridge's MuxedAccount, which depends on the destination chain, with the recipient address specified in the memo.
+To build a correct transaction, you could call a POST method https://stellar.allbridgeapi.net/wallet/transaction with JSON body:
+
+- `from` sender address, for example `GDL27JZFDPBXX7B4DTWPSEWRFHGTAQM6HK365M3J6LVAOBY6VCEUGRCU`
+- `amount` amount to send, integer as string, `10000000`
+- `destination` destination blockchain, string, `BSC`
+- `recipient` recipient address, 32 byte hex as string, `081A16070B02181B1B17171E100D0A170E1D111B000000000000000000000000`
+- `tokenAddress` token minter address, string, `GALLBRBQHAPW5FOVXXHYWR6J4ZDAQ35BMSNADYGBW25VOUHUYRZM4XIL`
+- `symbol` token symbol, string, `aeUSDC`
+
+It is very simmilar to XRPL.
+
+#### Other chains
+Locking on other chains is similar to the common lock flow.
+
+To encode and decode Stellar address to 32byte you can use [encodeEd25519PublicKey](https://stellar.github.io/js-stellar-sdk/StrKey.html#.encodeEd25519PublicKey) and [decodeEd25519PublicKey](https://stellar.github.io/js-stellar-sdk/StrKey.html#.decodeEd25519PublicKey) methods from StellarSdk
+
+### Get signature
+
+Allbridge API endpoint to get transaction details and signature using transaction lock ID
+```http request
+GET https://stellar-info.allbridgeapi.net/sign/{transactionId}
+```
+
+Response example
+
+```json5
+{
+  "lockId": "1999368962333213694265338977688250756", // Inner lock id
+  "block": "28598359", // Lock transaction block
+  "source": "POL", // Transfer source blockchain ID
+  "amount": "5000000000", // Amount to receive in system precision (9) (send_amount - bridge_fee)
+  "destination": "SOL", // Transfer destination blockchain ID
+  "recipient": "0x79726da52d99d60b07ead73b2f6f0bf6083cc85c77a94e34d691d78f8bcafec9", // Recipient address (32 bytes hex, zeros at the end)
+  "tokenSource": "SOL", // Token source blockchain ID
+  "tokenSourceAddress": "0x069b8857feab8184fb687f634618c035dac439dc1aeb3b5598a0f00000000001", // Token source address
+  "signature": "012000000c0", // Signature to pass it to unlock method
+  "secondarySignature": "012000000c1" // Secondary signature to pass it to unlock method
+}
+```
+It is similar to a common request but returns an additional `secondarySignature` field
+
+
+### Unlock tokens
+
+#### EVM
+
+All parameters for unlock are returned by the Allbridge API `sign` method (previous step)
+
+```solidity
+function unlock(uint128 lockId, address recipient, uint256 amount, bytes4 lockSource, bytes4 tokenSource, bytes32 tokenSourceAddress, bytes calldata signaturePrimary, bytes calldata signatureSecondary)
+```
+
+- `lockId` Lock ID value of the initial lock on Blockchain #1 (returned by the `sign` Allbridge API call)
+- `recipient` Recipient address returned by the `sign` API call and formatted as EVM address (first 20 bytes)
+- `amount` Amount in the internal precision of the bridge (9 digits), use the same amount as returned by the `sign` Allbridge API call
+- `lockSource` Transfer source [Blockchain ID](#blockchain-ids) (4 bytes, UTF8, zeros at the end), `source` field in `sign` response
+- `tokenSource` Token source [Blockchain ID](#blockchain-ids) (4 bytes, UTF8, zeros at the end), `tokenSource` field in `sign` response
+- `tokenSourceAddress` Token source address, `tokenSourceAddress` field in `sign` response
+- `signaturePrimary` Primary signature for unlock, pass the value received from the `sign` method call
+- `signatureSecondary` Secondary signature for unlock, pass the value received from the `sign` method call 
+It is similar to a common unlock but need additional `secondarySignature` field
+
+#### Solana
+
+The similar to common unlock, but needs additional secp instruction with secondary signature
+
+##### Instruction data
+
+```rust
+pub struct UnlockArgs {
+    /// Lock id
+    pub lock_id: LockId,
+    /// Source
+    pub lock_source: BlockchainId,
+    /// Amount
+    pub amount: u64,
+    /// Token source
+    pub token_source: BlockchainId,
+    /// Token source address
+    pub token_source_address: Address,
+    pub secp_instruction_index_1: u8,
+    pub secp_instruction_index_2: u8,
+}
+```
+
+- `lock_id` Lock ID value of the initial lock on Blockchain #1 (returned by the `sign` Allbridge API call)
+- `lock_source` Transfer source [Blockchain ID](#blockchain-ids) (4 bytes, UTF8, zeros at the end)
+- `amount` Amount in bridge internal precision (9 digits), use the same amount as returned by the `sign` Allbridge API call
+- `token_source` Token source [Blockchain ID](#blockchain-ids) (4 bytes, UTF8, zeros at the end)
+- `token_source_address` Token source address, use the same value as returned by the `sign` method
+- `secp_instruction_index_1` Index of the primary signature verification instruction, typically `0` is used unless you need some instructions to be prior to it in the transaction
+- `secp_instruction_index_2` Index of the secondary signature verification instruction, typically `1` is used unless you need some instructions to be prior to it in the transaction
+
+#### Stellar
+
+To receive tokens on Stellar (if it is not XLM) a trust line has to be established. You can do it yourself or use Allbridge server to prepare transaction for the user. Send `POST` to `https://stellar.allbridgeapi.net/wallet/create-line` with the following JSON:
+
+- `userAddress` Recipient address, for example `GDL27JZFDPBXX7B4DTWPSEWRFHGTAQM6HK365M3J6LVAOBY6VCEUGRCU`
+- `tokenAddress` Token minter address, `GALLBRBQHAPW5FOVXXHYWR6J4ZDAQ35BMSNADYGBW25VOUHUYRZM4XIL`
+- `symbol` Token symbol on Stellar, for example `aeUSDC`
+
+
+##### Unlock
+
+Send `POST` to `https://stellar.allbridgeapi.net/unlock` with the following JSON object:
+
+```json5
+{
+  "lockId": "2628534210935351210556389661603063554", // Lock ID received by the call to the signer
+  "recipient": "0x7a7d5401dd19f6a60c7b24af9861b22e593d52f518ded5714000000000000000", // Recipient address in hex
+  "amount": "3000000000", // Integer amount as string
+  "source": "SOL", // Transaction source address
+  "tokenSource": "SOL", // Token source address
+  "tokenSourceAddress": "0x0e151a1706190000000000000000000000000000000000000000000000000000", // Token minter/contract address on the original chain
+  "primarySignature": "0x85c5e8613985a01db6ff77c61b1a59a0e45630755de045dd…9291b70abe53647865cee3224df76d62936d795e2dcb8601c", // Primary signature returned by the signer
+  "secondarySignature": "0x95c5e8613985a01db6ff77c61b1a59a0e45630755de045dd…9291b70abe53647865cee3224df76d62936d795e2dcb8601c" // Secondary signature returned by the signer
+}
+```
+
+## Utility endpoints
+
+The same, but instead of call https://allbridgeapi.net you should call https://stellar-info.allbridgeapi.net
+
+For example:
+
+```http request
+GET https://stellar-info.allbridgeapi.net/token-info
+```
